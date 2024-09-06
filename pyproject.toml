@@ -1,0 +1,24 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "graphbook_huggingface"
+version = "0.0.0"
+authors = ["Richard Franklin <rsamf@graphbook.ai>"]
+description = "Graphbook Huggingface Plugin for no-code Huggingface workflows"
+keywords = ["huggingface", "ml", "workflow", "framework", "pytorch", "data science", "machine learning", "ai"]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+homepage = "https://graphbook.ai"
+documentation = "https://docs.graphbook.ai"
+repository = "https://github.com/graphbookai/graphbook"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+transformers = "^4.44.2"
