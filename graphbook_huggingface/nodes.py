@@ -1,6 +1,8 @@
+from graphbook import Note
 import graphbook.steps as steps
 from graphbook.resources import Resource
 import torch
+from datasets import load_dataset, Image
 from transformers import pipeline
 from transformers.pipelines.base import pad_collate_fn, no_collate_fn
 from graphbook.utils import transform_function_string
@@ -39,7 +41,13 @@ class HuggingfacePipeline(steps.BatchStep):
         },
         "on_model_outputs": {
             "type": "resource",
-            "description": "The function called when model outputs are received from the pipeline. By default, you may use AssignModelOutputToNotes.",
+            "description": "The function called when model outputs are received from the pipeline. By default, you may use CreateNotesFromModelOutputs.",
+            "required": False,
+        },
+        "kwargs": {
+            "type": "dict",
+            "description": "Additional keyword arguments to pass to the model pipeline",
+            "required": False,
         },
     }
     Outputs = ["out"]
@@ -55,6 +63,7 @@ class HuggingfacePipeline(steps.BatchStep):
         fp16: bool,
         log_model_outputs: bool,
         on_model_outputs: callable,
+        kwargs: dict = {},
     ):
         super().__init__(id, batch_size, item_key)
         self.pipe = pipeline(
@@ -62,6 +71,7 @@ class HuggingfacePipeline(steps.BatchStep):
             batch_size=batch_size,
             device=device_id,
             torch_dtype=torch.float16 if fp16 else None,
+            **kwargs
         )
         self.log_model_outputs = log_model_outputs
         self.create_note_fn = transform_function_string(on_model_outputs)
@@ -103,16 +113,83 @@ class HuggingfacePipeline(steps.BatchStep):
             self.create_note_fn(outputs, items, notes)
 
 
-default_convert_fn = \
-"""def convert_fn(outputs, items, notes):
+class HuggingfaceDataset(steps.GeneratorSourceStep):
+    RequiresInput = False
+    Parameters = {
+        "dataset_id": {
+            "type": "string",
+            "description": "The dataset ID from Huggingface",
+        },
+        "split": {
+            "type": "string",
+            "default": "train",
+            "description": "The split of the dataset to use",
+        },
+        "log_data": {
+            "type": "boolean",
+            "default": True,
+            "description": "Whether to log the outputs as JSON to the node UI",
+        },
+        "image_columns": {
+            "type": "list[string]",
+            "description": "The columns in the dataset that contain images. This is to let Graphbook know how to display the images in the UI.",
+            "required": False,
+        },
+        "kwargs": {
+            "type": "dict",
+            "description": "Additional keyword arguments to pass to the dataset",
+            "required": False,
+        },
+    }
+    Outputs = ["out"]
+    Category = "Huggingface"
+
+    def __init__(
+        self,
+        id,
+        dataset_id: str,
+        split: str,
+        log_data: bool,
+        image_columns=[],
+        kwargs={},
+    ):
+        super().__init__(id)
+        self.dataset = dataset_id
+        self.split = split
+        self.log_data = log_data
+        self.image_columns = image_columns
+        self.kwargs = kwargs
+
+    def get_note_dict(self, item):
+        d = {}
+        d.update(item)
+        for col in self.image_columns:
+            if col in item:
+                d[col] = {"type": "image", "value": item[col]}
+        return d
+
+    def load(self):
+        try:
+            dataset = load_dataset(self.dataset, self.split, **self.kwargs)
+        except ValueError:
+            dataset = load_dataset(self.dataset, **self.kwargs)
+        if isinstance(dataset, dict):
+            dataset = dataset[self.split]
+        for item in dataset:
+            if self.log_data:
+                self.log(item, "json")
+            note = Note(self.get_note_dict(item))
+            yield {"out": [note]}
+
+
+default_convert_fn = """def convert_fn(outputs, items, notes):
     for output, note in zip(outputs, notes):
         if note["model_output"] is None:
             note["model_output"] = []
-        note["model_output"].append(output)
-"""
+        note["model_output"].append(output)"""
 
 
-class AssignModelOutputToNotes(Resource):
+class AssignModelOutputsToNotes(Resource):
     """
     Used to assign the model outputs to its corresponding note. This is the default note creation function for Huggingface pipelines.
     """
