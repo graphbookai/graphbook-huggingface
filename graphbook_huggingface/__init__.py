@@ -7,4 +7,4 @@ export("HuggingfacePipeline", HuggingfacePipeline)
 export("HuggingfaceDataset", HuggingfaceDataset)
 export("AssignModelOutputsToNotes", AssignModelOutputsToNotes)
 
-web(osp.realpath(osp.join(osp.dirname(__file__), "../web/dist/bundle.js")))
+web(osp.realpath(osp.join(osp.dirname(__file__), "./dist/bundle.js")))

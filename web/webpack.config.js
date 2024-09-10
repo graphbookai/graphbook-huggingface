@@ -1,7 +1,7 @@
 module.exports = {
     entry: './src/main.tsx',
     output: {
-        filename: 'bundle.js',        
+        filename: '../../graphbook_huggingface/dist/bundle.js',        
         library: {
             type: 'module'
         },
