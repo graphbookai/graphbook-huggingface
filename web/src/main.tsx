@@ -47,6 +47,7 @@ const HFPipelineExtraParameters = {
     "item_key": {
         "type": "string",
         "description": "The key in the input item to use as input. Should be reference a URL linking to an image, a base64 string, a local path, or a PIL image.",
+        "value": ""
     },
     "device_id": {
         "type": "number",
@@ -66,10 +67,14 @@ const HFPipelineExtraParameters = {
     "on_model_outputs": {
         "type": "resource",
         "description": "The function called when model outputs are received from the pipeline. By default, you may use AssignModelOutputToNotes.",
+        "required": false,
+        "value": null
     },
     "kwargs": {
         "type": "dict",
         "description": "Additional keyword arguments to pass to the model pipeline",
+        "required": false,
+        "value": {}
     }
 };
 
@@ -96,23 +101,25 @@ const getHFPipelineNode = (modelId: string) => {
 const HFDatasetExtraParameters = {
     "split": {
         "type": "string",
-        "default": "train",
+        "value": "train",
         "description": "The split of the dataset to use",
     },
     "log_data": {
         "type": "boolean",
-        "default": true,
+        "value": true,
         "description": "Whether to log the outputs as JSON to the node UI",
     },
     "image_columns": {
         "type": "list[string]",
         "description": "The columns in the dataset that contain images. This is to let Graphbook know how to display the images in the UI.",
         "required": false,
+        "value": []
     },
     "kwargs": {
         "type": "dict",
         "description": "Additional keyword arguments to pass to the dataset",
         "required": false,
+        "value": {}
     }
 };
 
