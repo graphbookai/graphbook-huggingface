@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Flex, Input, Typography, Card, Select, Divider, Tag, Tooltip, theme } from 'antd';
-import { DownloadOutlined, HeartOutlined } from '@ant-design/icons';
+import { DownloadOutlined, HeartOutlined, CopyOutlined } from '@ant-design/icons';
 
 const bindDragData = (value: object, e: DragEvent) => {
     if (e) {
@@ -23,7 +23,7 @@ interface HFData {
 interface HFModel extends HFData {
     pipelineTag: string;
 };
-interface HFDataset extends HFData {};
+interface HFDataset extends HFData { };
 
 const tagStyle: React.CSSProperties = {
     maxWidth: '120px',
@@ -206,7 +206,7 @@ export function HF() {
         }
         setIsLoading(true);
 
-        const timeout = setTimeout(()=>loadModelList(e.target.value, searchType), SEARCH_TIMEOUT_DELAY);
+        const timeout = setTimeout(() => loadModelList(e.target.value, searchType), SEARCH_TIMEOUT_DELAY);
         setSearchTimeout(timeout);
     }, [searchTimeout, searchType]);
 
@@ -222,15 +222,15 @@ export function HF() {
     }, [search]);
 
     return (
-        <Flex vertical style={{height: '100%', width: '100%'}}>
+        <Flex vertical style={{ height: '100%', width: '100%' }}>
             <Search addonBefore={
                 <Select dropdownStyle={selectStyle} defaultValue="models" onChange={onSearchTypeChange}>
                     <Select.Option value="models">Models</Select.Option>
                     <Select.Option value="datasets">Datasets</Select.Option>
                 </Select>
             }
-            style={{ marginBottom: 5 }} placeholder="Search" onChange={onSearchChange} loading={isLoading}/>
-            <Flex vertical style={{overflowY: 'auto', paddingRight: 5}}>
+                style={{ marginBottom: 5 }} placeholder="Search" onChange={onSearchChange} loading={isLoading} />
+            <Flex vertical style={{ overflowY: 'auto', paddingRight: 5 }}>
                 {
                     results.map((result: HFData, i: number) => <ResultCard key={i} data={result} type={searchType} />)
                 }
@@ -252,6 +252,10 @@ export function ResultCard({ data, type }: { data: HFData, type: string }) {
         }
     }, [data]);
 
+    const onCopy = useCallback(() => {
+        navigator.clipboard.writeText(data.id);
+    }, [data]);
+
     const link = useMemo(() => {
         if (type === 'models') {
             return `${HF_HOST}/${data.id}`;
@@ -261,37 +265,41 @@ export function ResultCard({ data, type }: { data: HFData, type: string }) {
     }, [data, type]);
 
     return (
-        <Card style={{padding: 5, marginTop: 5, borderColor: '#eb9817'}} draggable onDragStart={onDragStart}>
-            <Flex vertical style={{marginBottom: 4}}>
+        <Card style={{ padding: 5, marginTop: 5, borderColor: '#eb9817' }} draggable onDragStart={onDragStart}>
+            <Flex vertical style={{ marginBottom: 4 }}>
                 <Flex justify='space-between'>
                     <Tooltip title={data.id} mouseEnterDelay={.5}>
-                    <Flex style={{overflow: 'hidden', whiteSpace: 'nowrap'}}>
-                        <span style={{display: 'inline-block', color: token.colorTextTertiary}}>{data.idParts[0]}/</span>
-                        <span style={{display: 'inline-block', textOverflow: 'ellipsis', overflow: 'hidden', fontWeight: 'bold'}}>{data.idParts[1]}</span>
-                    </Flex>
+                        <Flex style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            <span style={{ display: 'inline-block', color: token.colorTextTertiary }}>{data.idParts[0]}/</span>
+                            <span style={{ display: 'inline-block', textOverflow: 'ellipsis', overflow: 'hidden', fontWeight: 'bold' }}>{data.idParts[1]}</span>
+                        </Flex>
                     </Tooltip>
-                    <div style={{whiteSpace: 'nowrap'}}><DownloadOutlined /> <TruncatedNumber number={data.downloads}/></div>
+                    <CopyOutlined onClick={onCopy} />
                 </Flex>
                 {
-                    type === 'models' && <Text style={{color: token.colorTextLabel}} ellipsis>{(data as HFModel).pipelineTag}</Text>
+                    type === 'models' && <Text style={{ color: token.colorTextLabel }} ellipsis>{(data as HFModel).pipelineTag}</Text>
                 }
-                
-                <Divider style={{margin: '2px 0'}}/>
+
+                <Divider style={{ margin: '2px 0' }} />
             </Flex>
             {
-                data.tags.slice(0,10).map((tag: string, i: number) => (
+                data.tags.slice(0, 10).map((tag: string, i: number) => (
                     <Tooltip title={tag} key={i} mouseEnterDelay={.5}>
                         <Tag style={tagStyle}>{tag}</Tag>
                     </Tooltip>
                 ))
             }
             {
-                data.tags.length > 10 && 
-                <Tag style={{...tagStyle, maxWidth: '100px'}}>+{data.tags.length - 10} more</Tag>
+                data.tags.length > 10 &&
+                <Tag style={{ ...tagStyle, maxWidth: '100px' }}>+{data.tags.length - 10} more</Tag>
             }
             <Flex justify='space-between'>
                 <Link href={link} target="_blank">View {type === 'models' ? 'Model' : 'Dataset'}</Link>
-                <div style={{whiteSpace: 'nowrap'}}><HeartOutlined/> <TruncatedNumber number={data.likes}/></div>
+                <Flex>
+                    <div style={{ whiteSpace: 'nowrap' }}><HeartOutlined /> <TruncatedNumber number={data.likes} /></div>
+                    &nbsp;
+                    <div style={{ whiteSpace: 'nowrap' }}><DownloadOutlined /> <TruncatedNumber number={data.downloads} /></div>
+                </Flex>
             </Flex>
         </Card>
     )
@@ -319,7 +327,7 @@ type GraphbookAPI = {
 export function ExportPanels(graphbookAPI: GraphbookAPI) {
     return [{
         label: "Huggingface",
-        children: <HF/>,
+        children: <HF />,
         icon: "🤗"
     }];
 }

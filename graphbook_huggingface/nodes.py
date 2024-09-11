@@ -2,7 +2,7 @@ from graphbook import Note
 import graphbook.steps as steps
 from graphbook.resources import Resource
 import torch
-from datasets import load_dataset, Image
+from datasets import load_dataset
 from transformers import pipeline
 from transformers.pipelines.base import pad_collate_fn, no_collate_fn
 from graphbook.utils import transform_function_string
@@ -55,7 +55,6 @@ class HuggingfacePipeline(steps.BatchStep):
 
     def __init__(
         self,
-        id,
         model_id: str,
         batch_size: int,
         item_key: str,
@@ -65,7 +64,7 @@ class HuggingfacePipeline(steps.BatchStep):
         on_model_outputs: callable,
         kwargs: dict = {},
     ):
-        super().__init__(id, batch_size, item_key)
+        super().__init__(batch_size, item_key)
         self.pipe = pipeline(
             model=model_id,
             batch_size=batch_size,
@@ -146,14 +145,13 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
 
     def __init__(
         self,
-        id,
         dataset_id: str,
         split: str,
         log_data: bool,
         image_columns=[],
         kwargs={},
     ):
-        super().__init__(id)
+        super().__init__()
         self.dataset = dataset_id
         self.split = split
         self.log_data = log_data
@@ -183,10 +181,10 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
 
 
 default_convert_fn = """def convert_fn(outputs, items, notes):
-    for output, note in zip(outputs, notes):
-        if note["model_output"] is None:
-            note["model_output"] = []
-        note["model_output"].append(output)"""
+  for output, note in zip(outputs, notes):
+    if note["model_output"] is None:
+      note["model_output"] = []
+    note["model_output"].append(output)"""
 
 
 class AssignModelOutputsToNotes(Resource):
