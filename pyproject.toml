@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "graphbook_huggingface"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Richard Franklin <rsamf@graphbook.ai>"]
 description = "Graphbook Huggingface Plugin for no-code Huggingface workflows"
 keywords = ["huggingface", "ml", "workflow", "framework", "pytorch", "data science", "machine learning", "ai"]
