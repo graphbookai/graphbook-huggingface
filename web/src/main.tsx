@@ -68,13 +68,12 @@ const HFPipelineExtraParameters = {
         "type": "resource",
         "description": "The function called when model outputs are received from the pipeline. By default, you may use AssignModelOutputToNotes.",
         "required": false,
-        "value": null
+        "value": null,
     },
     "kwargs": {
         "type": "dict",
         "description": "Additional keyword arguments to pass to the model pipeline",
         "required": false,
-        "value": {}
     }
 };
 
@@ -119,7 +118,6 @@ const HFDatasetExtraParameters = {
         "type": "dict",
         "description": "Additional keyword arguments to pass to the dataset",
         "required": false,
-        "value": {}
     }
 };
 

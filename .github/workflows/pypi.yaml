@@ -19,4 +19,4 @@ jobs:
           npm install
           npm run build
           poetry build
-          poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.TEST_PYPI_PASSWORD }}
+          poetry publish -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
