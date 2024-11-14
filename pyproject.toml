@@ -20,6 +20,6 @@ documentation = "https://docs.graphbook.ai"
 repository = "https://github.com/graphbookai/graphbook"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 transformers = "^4.44.2"
 datasets = "^2.21.0"

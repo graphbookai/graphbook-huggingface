@@ -5,9 +5,10 @@ from transformers import pipeline
 from transformers.pipelines.base import pad_collate_fn, no_collate_fn
 from transformers.utils.generic import ModelOutput
 from transformers.pipelines.pt_utils import PipelineIterator
+import os
 
 
-class Pipeline(steps.BatchStep):
+class TransformersPipeline(steps.BatchStep):
     RequiresInput = True
     Parameters = {
         "model_id": {
@@ -47,6 +48,11 @@ class Pipeline(steps.BatchStep):
             "default": True,
             "description": "Whether to parallelize preprocessing by sending inputs to the worker pool",
         },
+        "match_dtypes": {
+            "type": "boolean",
+            "default": False,
+            "description": "Whether to match the dtype of the input_values to the model's torch_dtype",
+        },
         "kwargs": {
             "type": "dict",
             "description": "Additional keyword arguments to pass to the model pipeline",
@@ -65,6 +71,7 @@ class Pipeline(steps.BatchStep):
         fp16: bool,
         log_model_outputs: bool,
         parallelize_preprocessing: bool,
+        match_dtypes: bool = False,
         kwargs: dict = {},
     ):
         if parallelize_preprocessing:
@@ -81,6 +88,7 @@ class Pipeline(steps.BatchStep):
         )
         self.log_model_outputs = log_model_outputs
         self.parallelize_preprocessing = parallelize_preprocessing
+        self.match_dtypes = match_dtypes
         preprocess_params, forward_params, postprocess_params = (
             self.pipe._sanitize_parameters()
         )
@@ -96,10 +104,14 @@ class Pipeline(steps.BatchStep):
             if self.batch_size == 1
             else pad_collate_fn(self.pipe.tokenizer, self.pipe.feature_extractor)
         )
+        if "TOKENIZERS_PARALLELISM" not in os.environ:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     @torch.no_grad()
     def _load_fn(self, item: any):
         data = self.pipe.preprocess(item, **self.preprocess_params)
+        if self.match_dtypes and data.get('input_values') is not None:
+            data['input_values'] = data['input_values'].to(self.pipe.torch_dtype)
         return data
 
     @torch.no_grad()
