@@ -99,16 +99,23 @@ class TransformersPipeline(steps.BatchStep):
             **self.pipe._postprocess_params,
             **postprocess_params,
         }
+        self.feature_extractor = (
+            self.pipe.feature_extractor
+            if self.pipe.feature_extractor is not None
+            else self.pipe.image_processor
+        )
         self.collate_fn = (
             no_collate_fn
             if self.batch_size == 1
-            else pad_collate_fn(self.pipe.tokenizer, self.pipe.feature_extractor)
+            else pad_collate_fn(self.pipe.tokenizer, self.feature_extractor)
         )
         if "TOKENIZERS_PARALLELISM" not in os.environ:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
     @torch.no_grad()
     def _load_fn(self, item: any):
+        if isinstance(item, dict) and item.get("type") == "image":
+            item = item["value"]
         data = self.pipe.preprocess(item, **self.preprocess_params)
         if self.match_dtypes and data.get('input_values') is not None:
             data['input_values'] = data['input_values'].to(self.pipe.torch_dtype)

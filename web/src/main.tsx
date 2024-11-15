@@ -161,7 +161,6 @@ export function ResultCard({ data, type, schema }: { data: HFData, type: string,
 
     const onDragStart = useCallback((e: any) => {
         const node = { type: "step", data: { label: schema.name, ...schema } };
-        console.log(node);
         if (type === 'models') {
             node.data.parameters.model_id.value = data.id;
             bindDragData({ node }, e);

@@ -7,11 +7,6 @@ from graphbook.utils import image
 class MergeMasks(steps.Step):
     RequiresInput = True
     Parameters = {
-        "item_key": {
-            "type": "string",
-            "description": "The key in the input item to use as input",
-            "required": True,
-        },
         "output_key": {
             "type": "string",
             "description": "The key in the output item to use as output",
@@ -26,15 +21,15 @@ class MergeMasks(steps.Step):
     Outputs = ["out"]
     Category = "Huggingface/Post Processing"
 
-    def __init__(self, item_key: str, output_key: str, delete_raw_output: bool):
-        super().__init__(item_key)
+    def __init__(self, output_key: str, delete_raw_output: bool):
+        super().__init__()
         self.output_key = output_key
         self.delete_raw_output = delete_raw_output
 
-    def on_item(self, item, note):
+    def on_note(self, note):
         if note[self.output_key] is None:
             note[self.output_key] = []
-        output = item["model_output"]
+        output = note["model_output"]
         tensors = []
         for o in output:
             tensors.append(F.to_tensor(o["mask"]))
@@ -43,19 +38,14 @@ class MergeMasks(steps.Step):
             output = torch.sum(output, dim=0)
             output = torch.where(output > 0, 1.0, 0.0)
             output = F.to_pil_image(output)
-            note[self.output_key].append({"type": "image", "value": output})
+            note[self.output_key] = {"type": "image", "value": output}
 
         if self.delete_raw_output:
-            del item["model_output"]
+            del note["model_output"]
 
 class FilterMasks(steps.Step):
     RequiresInput = True
     Parameters = {
-        "item_key": {
-            "type": "string",
-            "description": "The key in the input item to use as input",
-            "required": True,
-        },
         "labels": {
             "type": "list[string]",
             "description": "The labels to filter for",
@@ -65,23 +55,18 @@ class FilterMasks(steps.Step):
     Outputs = ["out"]
     Category = "Huggingface/Post Processing"
 
-    def __init__(self, item_key: str, labels: List[str]):
-        super().__init__(item_key)
+    def __init__(self, labels: List[str]):
+        super().__init__()
         self.labels = labels
 
-    def on_item(self, item, *_):
-        output = item["model_output"]
+    def on_note(self, note):
+        output = note["model_output"]
         filtered_output = [o for o in output if o["label"] in self.labels]
-        item["model_output"] = filtered_output
+        note["model_output"] = filtered_output
 
 class MaskOutputs(steps.Step):
     RequiresInput = True
     Parameters = {
-        "item_key": {
-            "type": "string",
-            "description": "The key in the input item to use as input",
-            "required": True,
-        },
         "output_key": {
             "type": "string",
             "description": "The key in the output item to use as output",
@@ -96,13 +81,13 @@ class MaskOutputs(steps.Step):
     Outputs = ["out"]
     Category = "Huggingface/Post Processing"
 
-    def __init__(self, item_key: str, output_key: str, delete_raw_output: bool):
-        super().__init__(item_key)
+    def __init__(self, output_key: str, delete_raw_output: bool):
+        super().__init__()
         self.output_key = output_key
         self.delete_raw_output = delete_raw_output
 
-    def on_item(self, item, note):
-        output = item["model_output"]
+    def on_note(self, note):
+        output = note["model_output"]
         for o in output:
             o["type"] = "image"
             o["value"] = o["mask"]
@@ -110,17 +95,12 @@ class MaskOutputs(steps.Step):
         note[self.output_key] = output
 
         if self.delete_raw_output:
-            del item["model_output"]
+            del note["model_output"]
 
 
 class DepthOutputs(steps.Step):
     RequiresInput = True
     Parameters = {
-        "item_key": {
-            "type": "string",
-            "description": "The key in the input item to use as input",
-            "required": True,
-        },
         "output_key": {
             "type": "string",
             "description": "The key in the output item to use as output",
@@ -130,24 +110,19 @@ class DepthOutputs(steps.Step):
     Outputs = ["out"]
     Category = "Huggingface/Post Processing"
 
-    def __init__(self, item_key: str, output_key: str):
-        super().__init__(item_key)
+    def __init__(self, output_key: str):
+        super().__init__()
         self.output_key = output_key
 
-    def on_item(self, item, note):
-        output = image(item["model_output"]["depth"])
-        del item["model_output"]
+    def on_note(self, note):
+        output = image(note["model_output"]["depth"])
+        del note["model_output"]
         note[self.output_key] = output
 
 
 class ImageClassificationMaxLabel(steps.Step):
     RequiresInput = True
     Parameters = {
-        "item_key": {
-            "type": "string",
-            "description": "The key in the input item to use as input",
-            "required": True,
-        },
         "delete_raw_hf_output": {
             "type": "boolean",
             "default": True,
@@ -157,18 +132,18 @@ class ImageClassificationMaxLabel(steps.Step):
     Outputs = ["out"]
     Category = "Huggingface/Post Processing"
 
-    def __init__(self, item_key: str, delete_raw_hf_output: bool):
-        super().__init__(item_key)
+    def __init__(self, delete_raw_hf_output: bool):
+        super().__init__()
         self.delete_raw_hf_output = delete_raw_hf_output
 
-    def on_item(self, item, *_):
-        output = item["model_output"]
+    def on_note(self, note):
+        output = note["model_output"]
         max_label = ""
         max_score = float("-inf")
         for out in output:
             if out["score"] > max_score:
                 max_score = out["score"]
                 max_label = out["label"]
-        item["prediction"] = max_label
+        note["prediction"] = max_label
         if self.delete_raw_hf_output:
-            del item["model_output"]
+            del note["model_output"]
