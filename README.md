@@ -23,6 +23,6 @@ Graphbook Hugging Face contains the following nodes:
 * And numerous `Post Processing/*` steps for post processing of model outputs
 
 ## Getting started
-1. `pip install graphbook_huggingface`
+1. `pip install graphbook_huggingface graphbook transformers datasets`
 1. `graphbook --config hf.config.yaml`
 

@@ -21,5 +21,10 @@ repository = "https://github.com/graphbookai/graphbook"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+
+[tool.poetry.group.peer]
+optional = true
+
+[tool.poetry.group.peer.dependencies]
 transformers = "^4.44.2"
 datasets = "^2.21.0"
