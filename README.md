@@ -1,23 +1,28 @@
 <p align="center">
   <a href="https://graphbook.ai">
-    <img src="https://github.com/graphbookai/graphbook/blob/main/docs/_static/graphbook.png?raw=true" alt="Logo" width=256>
+    <img src="assets/graphbook-hf-banner.png" alt="Logo" width=512>
   </a>
 
-  <h1 align="center">Graphbook Huggingface</h1>
+  <h1 align="center">Graphbook Hugging Face</h1>
 
   <p align="center">
-    A Huggingface Plugin to drag-and-drop models and datasets onto Graphbook workflows
+    Build No Code Hugging Face AI Pipelines
   </p>
 </p>
 
-This plugin contains a web panel for searching and drag-and-dropping models and datasets from [Huggingface Hub](https://huggingface.co/) onto their graphbook workflows.
-It also contains the following nodes:
+You can build efficient DAG workflows or AI pipelines without any code. This is a Graphbook plugin that lets you drag and drop Hugging Face models and datasets onto Graphbook workflows. This plugin contains a web panel for searching and drag-and-dropping models and datasets from [Huggingface Hub](https://huggingface.co/) onto their graphbook workflows.
 
-* `HuggingfacePipeline` for model usage from transformers package
-* `HuggingfaceDataset` for dataset usage from the datasets package
-* `AssignModelOutputsToNotes` to assign HF model outputs to incoming Notes
+<img src="assets/example-hf-pipeline.png" alt="Example Pipeline with Hugging Face" with=1024>
+
+## Packaged Nodes
+
+Graphbook Hugging Face contains the following nodes:
+
+* `TransformersPipeline` step for model usage from transformers package
+* `HuggingfaceDataset` step for dataset usage from the datasets package
+* And numerous `Post Processing/*` steps for post processing of model outputs
 
 ## Getting started
-1. `pip install graphbook_huggingface`
+1. `pip install graphbook_huggingface graphbook transformers datasets`
 1. `graphbook --config hf.config.yaml`
 

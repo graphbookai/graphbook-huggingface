@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Flex, Input, Typography, Card, Select, Divider, Tag, Tooltip, theme } from 'antd';
 import { DownloadOutlined, HeartOutlined, CopyOutlined } from '@ant-design/icons';
 
@@ -38,115 +38,14 @@ const selectStyle: React.CSSProperties = {
     padding: 2
 };
 
-const HFPipelineExtraParameters = {
-    "batch_size": {
-        "type": "number",
-        "value": 8,
-        "description": "The batch size for the pipeline",
-    },
-    "item_key": {
-        "type": "string",
-        "description": "The key in the input item to use as input. Should be reference a URL linking to an image, a base64 string, a local path, or a PIL image.",
-        "value": ""
-    },
-    "device_id": {
-        "type": "number",
-        "value": 0,
-        "description": "The GPU ID to use for the pipeline",
-    },
-    "fp16": {
-        "type": "boolean",
-        "value": false,
-        "description": "Whether to use fp16",
-    },
-    "log_model_outputs": {
-        "type": "boolean",
-        "value": true,
-        "description": "Whether to log the model outputs as JSON to the node UI",
-    },
-    "on_model_outputs": {
-        "type": "resource",
-        "description": "The function called when model outputs are received from the pipeline. By default, you may use AssignModelOutputToNotes.",
-        "required": false,
-        "value": null,
-    },
-    "kwargs": {
-        "type": "dict",
-        "description": "Additional keyword arguments to pass to the model pipeline",
-        "required": false,
-    }
-};
-
-const getHFPipelineNode = (modelId: string) => {
-    return {
-        type: 'step',
-        data: {
-            name: 'HuggingfacePipeline',
-            label: 'HuggingfacePipeline',
-            inputs: ["in"],
-            outputs: ["out"],
-            parameters: {
-                model_id: {
-                    type: "string",
-                    value: modelId,
-                    description: "The model ID to use for the pipeline",
-                },
-                ...HFPipelineExtraParameters
-            }
-        }
-    };
-};
-
-const HFDatasetExtraParameters = {
-    "split": {
-        "type": "string",
-        "value": "train",
-        "description": "The split of the dataset to use",
-    },
-    "log_data": {
-        "type": "boolean",
-        "value": true,
-        "description": "Whether to log the outputs as JSON to the node UI",
-    },
-    "image_columns": {
-        "type": "list[string]",
-        "description": "The columns in the dataset that contain images. This is to let Graphbook know how to display the images in the UI.",
-        "required": false,
-        "value": []
-    },
-    "kwargs": {
-        "type": "dict",
-        "description": "Additional keyword arguments to pass to the dataset",
-        "required": false,
-    }
-};
-
-const getHFDatasetNode = (datasetId: string) => {
-    return {
-        type: 'step',
-        data: {
-            name: 'HuggingfaceDataset',
-            label: 'HuggingfaceDataset',
-            inputs: [],
-            outputs: ["out"],
-            parameters: {
-                dataset_id: {
-                    type: "string",
-                    value: datasetId,
-                    description: "The dataset ID to use",
-                },
-                ...HFDatasetExtraParameters
-            }
-        }
-    };
-};
-
-export function HF() {
+export function HF({ useAPI }: { useAPI: Function }) {
     const [results, setResults] = useState<HFData[]>([]);
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout>(null);
     const [searchType, setSearchType] = useState<string>('models');
     const [search, setSearch] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const schema = useRef<any>(null);
+    const API = useAPI();
 
     const loadModelList = useCallback(async (search, searchType) => {
         if (search.length === 0) {
@@ -221,34 +120,54 @@ export function HF() {
         loadModelList(search, value);
     }, [search]);
 
+    useEffect(() => {
+        const setSchema = async () => {
+            const nodes = await API.getNodes();
+            if (!nodes) {
+                return;
+            }
+            console.log("Got nodes", nodes);
+            const hfSteps = nodes.steps.Huggingface.children;
+            schema.current = {
+                datasets: hfSteps.HuggingfaceDataset,
+                models: hfSteps.TransformersPipeline
+            };
+        };
+        setSchema();
+    }, [API]);
+
     return (
         <Flex vertical style={{ height: '100%', width: '100%' }}>
-            <Search addonBefore={
-                <Select dropdownStyle={selectStyle} defaultValue="models" onChange={onSearchTypeChange}>
-                    <Select.Option value="models">Models</Select.Option>
-                    <Select.Option value="datasets">Datasets</Select.Option>
-                </Select>
-            }
-                style={{ marginBottom: 5 }} placeholder="Search" onChange={onSearchChange} loading={isLoading} />
+            <Search
+                addonBefore={
+                    <Select dropdownStyle={selectStyle} defaultValue="models" onChange={onSearchTypeChange}>
+                        <Select.Option value="models">Models</Select.Option>
+                        <Select.Option value="datasets">Datasets</Select.Option>
+                    </Select>
+                }
+                style={{ marginBottom: 5 }} placeholder="Search" onChange={onSearchChange} loading={isLoading}
+            />
             <Flex vertical style={{ overflowY: 'auto', paddingRight: 5 }}>
                 {
-                    results.map((result: HFData, i: number) => <ResultCard key={i} data={result} type={searchType} />)
+                    results.map((result: HFData, i: number) => <ResultCard schema={schema.current[searchType]} key={i} data={result} type={searchType} />)
                 }
             </Flex>
         </Flex>
     );
 }
 
-export function ResultCard({ data, type }: { data: HFData, type: string }) {
+export function ResultCard({ data, type, schema }: { data: HFData, type: string, schema: any }) {
     const { token } = theme.useToken();
 
     const onDragStart = useCallback((e: any) => {
-        console.log(e);
+        const node = { type: "step", data: { label: schema.name, ...schema } };
         if (type === 'models') {
-            bindDragData({ node: getHFPipelineNode(data.id) }, e);
+            node.data.parameters.model_id.value = data.id;
+            bindDragData({ node }, e);
         }
         if (type === 'datasets') {
-            bindDragData({ node: getHFDatasetNode(data.id) }, e);
+            node.data.parameters.dataset_id.value = data.id;
+            bindDragData({ node }, e);
         }
     }, [data]);
 
@@ -326,8 +245,8 @@ type GraphbookAPI = {
 
 export function ExportPanels(graphbookAPI: GraphbookAPI) {
     return [{
-        label: "Huggingface",
-        children: <HF />,
+        label: "Hugging Face",
+        children: <HF useAPI={graphbookAPI.useAPI} />,
         icon: "🤗"
     }];
 }
