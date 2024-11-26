@@ -44,6 +44,7 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
         self,
         dataset_id: str,
         split: str,
+        shuffle: bool,
         log_data: bool,
         image_columns=[],
         kwargs={},
@@ -51,6 +52,7 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
         super().__init__()
         self.dataset = dataset_id
         self.split = split
+        self.shuffle = shuffle
         self.log_data = log_data
         self.image_columns = image_columns
         self.kwargs = kwargs
