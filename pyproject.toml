@@ -28,3 +28,4 @@ optional = true
 [tool.poetry.group.peer.dependencies]
 transformers = "^4.44.2"
 datasets = "^2.21.0"
+torch = "^2.0.0"
