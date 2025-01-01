@@ -5,6 +5,13 @@ import torchvision.transforms.functional as F
 from graphbook.utils import image
 
 class MergeMasks(steps.Step):
+    """
+    Merges multiple masks into a single mask by summing them and thresholding the result.
+    
+    Args:
+        output_key (str): The key in the output item to use as output
+        delete_raw_output (bool): Whether to delete the raw Huggingface model output from the item
+    """
     RequiresInput = True
     Parameters = {
         "output_key": {
@@ -44,6 +51,12 @@ class MergeMasks(steps.Step):
             del note["model_output"]
 
 class FilterMasks(steps.Step):
+    """
+    Filters the masks based on the labels provided.
+    
+    Args:
+        labels (List[str]): The labels to filter for
+    """
     RequiresInput = True
     Parameters = {
         "labels": {
@@ -65,6 +78,13 @@ class FilterMasks(steps.Step):
         note["model_output"] = filtered_output
 
 class MaskOutputs(steps.Step):
+    """
+    Parses the model output as masks and converts them to images for display in the Graphbook UI.
+    
+    Args:
+        output_key (str): The key in the output item to use as output
+        delete_raw_output (bool): Whether to delete the raw Huggingface model output
+    """
     RequiresInput = True
     Parameters = {
         "output_key": {
@@ -99,6 +119,12 @@ class MaskOutputs(steps.Step):
 
 
 class DepthOutputs(steps.Step):
+    """
+    Parses the model output as depth maps and converts them to images for display in the Graphbook UI.
+    
+    Args:
+        output_key (str): The key in the output item to use as output
+    """
     RequiresInput = True
     Parameters = {
         "output_key": {
@@ -121,6 +147,12 @@ class DepthOutputs(steps.Step):
 
 
 class ImageClassificationMaxLabel(steps.Step):
+    """
+    Outputs the label with the maximum score from the model output.
+    
+    Args:
+        delete_raw_hf_output (bool): Whether to delete the raw Huggingface model output
+    """
     RequiresInput = True
     Parameters = {
         "delete_raw_hf_output": {

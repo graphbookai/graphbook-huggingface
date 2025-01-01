@@ -5,6 +5,19 @@ import random
 
 
 class HuggingfaceDataset(steps.GeneratorSourceStep):
+    """
+    Loads a dataset from 🤗 Hugging Face and yields each dataset row as a Note.
+    The dataset is loaded using the `datasets.load_dataset` method.
+    If loading an dataset with images, you must specify the columns that contain images if you want them to be displayed in the UI.
+    
+    Args:
+        dataset_id (str): The dataset ID from Huggingface
+        split (str): The split of the dataset to use
+        shuffle (bool): Whether to shuffle the dataset
+        log_data (bool): Whether to log the outputs as JSON to the node UI
+        image_columns (List[str]): The columns in the dataset that contain images. This is to let Graphbook know how to display the images in the UI.
+        kwargs (dict): Additional keyword arguments to pass to the internal Hugging Face datasets method `datasets.load_dataset` which gets used to load the dataset.
+    """
     RequiresInput = False
     Parameters = {
         "dataset_id": {

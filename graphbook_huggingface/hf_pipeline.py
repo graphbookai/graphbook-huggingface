@@ -9,6 +9,21 @@ import os
 
 
 class TransformersPipeline(steps.BatchStep):
+    """
+    Loads and executes a model pipeline from 🤗 Hugging Face Transformers.
+    The model pipeline is loaded using the `transformers.pipeline` method.
+    
+    Args:
+        model_id (str): The model ID from Huggingface
+        batch_size (int): The batch size for the pipeline
+        item_key (str): The key in the input item to use as input. Incoming values should be strings (or normal text)
+        device_id (str): The device ID (e.g, "cuda:0", "cpu") to use
+        fp16 (bool): Whether to use fp16
+        log_model_outputs (bool): Whether to log the model outputs as JSON to the node UI
+        parallelize_preprocessing (bool): Whether to parallelize preprocessing by sending inputs to the worker pool
+        match_dtypes (bool): Whether to match the dtype of the input_values to the model's torch_dtype
+        kwargs (dict): Additional keyword arguments to pass to the internal Hugging Face transformers method `transformers.pipeline` which gets used to load the pipeline.
+    """
     RequiresInput = True
     Parameters = {
         "model_id": {
