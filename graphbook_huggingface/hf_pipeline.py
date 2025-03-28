@@ -1,5 +1,5 @@
 from typing import List
-import graphbook.steps as steps
+import graphbook.core.steps as steps
 import torch
 from transformers import pipeline
 from transformers.pipelines.base import pad_collate_fn, no_collate_fn
@@ -119,11 +119,14 @@ class TransformersPipeline(steps.BatchStep):
             if self.pipe.feature_extractor is not None
             else self.pipe.image_processor
         )
-        self.collate_fn = (
-            no_collate_fn
-            if self.batch_size == 1
-            else pad_collate_fn(self.pipe.tokenizer, self.feature_extractor)
-        )
+        try:
+            self.collate_fn = (
+                no_collate_fn
+                if self.batch_size == 1
+                else pad_collate_fn(self.pipe.tokenizer, self.feature_extractor)
+            )
+        except:
+            self.collate_fn = no_collate_fn
         if "TOKENIZERS_PARALLELISM" not in os.environ:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -137,7 +140,7 @@ class TransformersPipeline(steps.BatchStep):
         return data
 
     @torch.no_grad()
-    def on_item_batch(self, inputs, items, notes):
+    def on_item_batch(self, inputs, items, dataset_items):
         if not self.parallelize_preprocessing or inputs == None:
             inputs = [self._load_fn(i) for i in items]
         inputs = [self.collate_fn(inputs)]  # To make this an iterable
@@ -152,8 +155,8 @@ class TransformersPipeline(steps.BatchStep):
             model_iterator, self.pipe.postprocess, self.postprocess_params
         )
 
-        for output, note in zip(final_iterator, notes):
+        for output, data in zip(final_iterator, dataset_items):
             output: ModelOutput
             if self.log_model_outputs:
                 self.log(output, "json")
-            note["model_output"] = output
+            data["model_output"] = output

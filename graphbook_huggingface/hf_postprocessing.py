@@ -1,8 +1,8 @@
 from typing import List
-import graphbook.steps as steps
+import graphbook.core.steps as steps
 import torch
 import torchvision.transforms.functional as F
-from graphbook.utils import image
+from graphbook.core.utils import image
 
 class MergeMasks(steps.Step):
     """
@@ -33,10 +33,10 @@ class MergeMasks(steps.Step):
         self.output_key = output_key
         self.delete_raw_output = delete_raw_output
 
-    def on_note(self, note):
-        if note[self.output_key] is None:
-            note[self.output_key] = []
-        output = note["model_output"]
+    def on_data(self, data):
+        if data[self.output_key] is None:
+            data[self.output_key] = []
+        output = data["model_output"]
         tensors = []
         for o in output:
             tensors.append(F.to_tensor(o["mask"]))
@@ -45,10 +45,10 @@ class MergeMasks(steps.Step):
             output = torch.sum(output, dim=0)
             output = torch.where(output > 0, 1.0, 0.0)
             output = F.to_pil_image(output)
-            note[self.output_key] = {"type": "image", "value": output}
+            data[self.output_key] = {"type": "image", "value": output}
 
         if self.delete_raw_output:
-            del note["model_output"]
+            del data["model_output"]
 
 class FilterMasks(steps.Step):
     """
@@ -72,10 +72,10 @@ class FilterMasks(steps.Step):
         super().__init__()
         self.labels = labels
 
-    def on_note(self, note):
-        output = note["model_output"]
+    def on_data(self, data):
+        output = data["model_output"]
         filtered_output = [o for o in output if o["label"] in self.labels]
-        note["model_output"] = filtered_output
+        data["model_output"] = filtered_output
 
 class MaskOutputs(steps.Step):
     """
@@ -106,16 +106,16 @@ class MaskOutputs(steps.Step):
         self.output_key = output_key
         self.delete_raw_output = delete_raw_output
 
-    def on_note(self, note):
-        output = note["model_output"]
+    def on_data(self, data):
+        output = data["model_output"]
         for o in output:
             o["type"] = "image"
             o["value"] = o["mask"]
             del o["mask"]
-        note[self.output_key] = output
+        data[self.output_key] = output
 
         if self.delete_raw_output:
-            del note["model_output"]
+            del data["model_output"]
 
 
 class DepthOutputs(steps.Step):
@@ -140,10 +140,10 @@ class DepthOutputs(steps.Step):
         super().__init__()
         self.output_key = output_key
 
-    def on_note(self, note):
-        output = image(note["model_output"]["depth"])
-        del note["model_output"]
-        note[self.output_key] = output
+    def on_data(self, data):
+        output = image(data["model_output"]["depth"])
+        del data["model_output"]
+        data[self.output_key] = output
 
 
 class ImageClassificationMaxLabel(steps.Step):
@@ -168,14 +168,14 @@ class ImageClassificationMaxLabel(steps.Step):
         super().__init__()
         self.delete_raw_hf_output = delete_raw_hf_output
 
-    def on_note(self, note):
-        output = note["model_output"]
+    def on_data(self, data):
+        output = data["model_output"]
         max_label = ""
         max_score = float("-inf")
         for out in output:
             if out["score"] > max_score:
                 max_score = out["score"]
                 max_label = out["label"]
-        note["prediction"] = max_label
+        data["prediction"] = max_label
         if self.delete_raw_hf_output:
-            del note["model_output"]
+            del data["model_output"]

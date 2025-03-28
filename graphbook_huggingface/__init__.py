@@ -3,7 +3,7 @@ from . import hf_pipeline
 
 from .hf_datasets import HuggingfaceDataset
 import os.path as osp
-from graphbook.plugins import export, web
+from graphbook.core.plugins import export, web
 
 
 export("TransformersPipeline", hf_pipeline.TransformersPipeline)
