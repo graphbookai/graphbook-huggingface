@@ -1,12 +1,11 @@
-from graphbook import Note
-import graphbook.steps as steps
+import graphbook.core.steps as steps
 from datasets import load_dataset
 import random
 
 
 class HuggingfaceDataset(steps.GeneratorSourceStep):
     """
-    Loads a dataset from 🤗 Hugging Face and yields each dataset row as a Note.
+    Loads a dataset from 🤗 Hugging Face and yields each dataset row.
     The dataset is loaded using the `datasets.load_dataset` method.
     If loading an dataset with images, you must specify the columns that contain images if you want them to be displayed in the UI.
     
@@ -69,14 +68,6 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
         self.log_data = log_data
         self.image_columns = image_columns
         self.kwargs = kwargs
-
-    def get_note_dict(self, item):
-        d = {}
-        d.update(item)
-        for col in self.image_columns:
-            if col in item:
-                d[col] = {"type": "image", "value": item[col]}
-        return d
     
     def get_iterator(self, dataset):
         if self.shuffle:
@@ -89,6 +80,14 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
                 yield item
 
     def load(self):
+        def to_dict(row):
+            d = {}
+            d.update(row)
+            for col in self.image_columns:
+                if col in row:
+                    d[col] = {"type": "image", "value": row[col]}
+            return d
+
         try:
             dataset = load_dataset(self.dataset, self.split, **self.kwargs)
         except ValueError:
@@ -97,9 +96,7 @@ class HuggingfaceDataset(steps.GeneratorSourceStep):
             dataset = dataset[self.split]
             
         dataset = self.get_iterator(dataset)
-        for item in dataset:
+        for row in dataset:
             if self.log_data:
-                self.log(item, "json")
-            note = Note(self.get_note_dict(item))
-            yield {"out": [note]}
-
+                self.log(row, "json")
+            yield {"out": [to_dict(row)]}
